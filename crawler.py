@@ -148,7 +148,7 @@ for keyword in keyword_list:
         mail_html += "<p>"+result_dic[keyword]['date'][i]+"</p><br>"
     mail_html += "<br>" 
 mail_html += "</body></html>"
-print(mail_html)
+# print(mail_html)
 
 # Create .env file path.
 dotenv_path = join(dirname(__file__), '.env')
