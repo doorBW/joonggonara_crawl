@@ -1,9 +1,19 @@
-import os
 from selenium import webdriver
 from bs4 import BeautifulSoup
-from datetime import datetime
+import datetime
+import smtplib
+from email.mime.text import MIMEText
+import os
+from os.path import join, dirname
+from dotenv import load_dotenv
+
 
 # 고정 변수
+
+utc_time = datetime.datetime.utcnow()
+time_gap = datetime.timedelta(hours=9)
+kor_time = utc_time + time_gap
+today = kor_time.strftime("%Y.%m.%d.")
 
 if os.uname().sysname == 'Linux':
     os_name = 'linux'
@@ -18,9 +28,16 @@ else:
 naver_login_url = 'https://nid.naver.com/nidlogin.login'
 joonggonara_url = 'https://cafe.naver.com/joonggonara.cafe?iframe_url=/ArticleList.nhn%3Fsearch.clubid=10050146%26search.boardtype=L%26viewType=pc'
 keyword_list = [
-    '소니 a5100',
+    '소니 a5100','소니 a6000'
 ]
-today = datetime.today().strftime("%Y.%m.%d.")
+result_dic = {}
+for keyword in keyword_list:
+    result_dic[keyword] = {
+        'title' : [],
+        'writer' : [],
+        'href' : [],
+        'date' : []
+    }
 exception_flag = 0
 exception_title_keyword_list = ['삽니다','사기','부산','대전','대구','사 기','사  기','ㅅ ㅏㄱ ㅣ','완료','경남','창원']
 exception_writer_keyword_list = []
@@ -66,6 +83,7 @@ for keyword in keyword_list:
     html = BeautifulSoup(req, 'html.parser')
     title_list = []
     writer_list = []
+    href_list = []
     date_list = []
     # driver.get_screenshot_as_file('naver_main_headless.png')
     for tag in html.select('div#content-area div#main-area table tbody tr'):
@@ -95,13 +113,64 @@ for keyword in keyword_list:
             continue
 
         href = 'https://cafe.naver.com/joonggonara/'+number
-        print(title,"//",writer,"//",date)
-        print(href)
+        # print(title,"//",writer,"//",date)
+        # print(href)
 
+        if writer in writer_list:
+            pass
+        else:
+            title_list.append(title)
+            writer_list.append(writer)
+            href_list.append(href)
+            date_list.append(date)
+    result_dic[keyword]['title'] = title_list
+    result_dic[keyword]['writer'] = writer_list
+    result_dic[keyword]['href'] = href_list
+    result_dic[keyword]['date'] = date_list
     driver.switch_to.default_content()
+driver.quit()
+# print(result_dic)
+
+# 파일로 기록
+
 
 # 1주일 이전 파일 삭제
 
-# 메일 발송
 
-driver.quit()
+
+# 메일 발송
+# 메일 본문 작성 먼저
+mail_html = "<html><head></head><body>"+kor_time.strftime("%Y/%m/%d %H:%M:%S")+"<br>"  # YYYY/mm/dd HH:MM:SS 형태의 시간 출력
+for keyword in keyword_list:
+    mail_html += "<h1>"+keyword+" 크롤링 결과</h1>"
+    for i,v in enumerate(result_dic[keyword]['title']):
+        mail_html += "<p><a href='"+result_dic[keyword]['href'][i]+"'>"+v+" _ "+result_dic[keyword]['writer'][i]+"</a></p>"
+        mail_html += "<p>"+result_dic[keyword]['date'][i]+"</p><br>"
+    mail_html += "<br>" 
+mail_html += "</body></html>"
+print(mail_html)
+
+# Create .env file path.
+dotenv_path = join(dirname(__file__), '.env')
+# Load file from the path.
+load_dotenv(dotenv_path)
+# open SMTP
+smtp = smtplib.SMTP('smtp.gmail.com', 587)
+smtp.ehlo()      # say Hello
+smtp.starttls()  # TLS 사용시 필요
+smtp.login('doobw@likelion.org', os.getenv('PASSWORD'))
+ 
+# main html
+msg = MIMEText(mail_html,'html')
+# title
+msg['Subject'] = '중고나라 크롤링 결과 보고'
+# from
+msg['From'] = os.getenv("FROM")
+# to
+msg['To'] = os.getenv("TO")
+# from / to / msg
+smtp.sendmail(msg['From'], msg['To'].split(','), msg.as_string())
+ 
+smtp.quit()
+
+
