@@ -21,9 +21,9 @@ else:
     os_name = 'mac'
 
 if os_name == 'linux':
-    dirver_loc = os.path.realpath(__file__)+'../chromeDriver/linux/chromedriver'
+    dirver_loc = os.path.realpath(__file__)+'/../chromeDriver/linux/chromedriver'
 else:
-    dirver_loc = os.path.realpath(__file__)+'../chromeDriver/mac/chromedriver'
+    dirver_loc = os.path.realpath(__file__)+'/../chromeDriver/mac/chromedriver'
 
 naver_login_url = 'https://nid.naver.com/nidlogin.login'
 joonggonara_url = 'https://cafe.naver.com/joonggonara.cafe?iframe_url=/ArticleList.nhn%3Fsearch.clubid=10050146%26search.boardtype=L%26viewType=pc'
